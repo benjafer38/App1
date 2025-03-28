@@ -4,6 +4,125 @@
 #include <string.h>
 #include <limits.h>
 
+// Estructura para almacenar los ingredientes y su cantidad de ventas
+typedef struct {
+    char ingredient[MAX_STRING];
+    int count;
+} IngredientCount;
+// Función auxiliar para buscar un ingrediente en el array de ingredientes
+int find_ingredient(IngredientCount *ingredients, int size, char *ingredient) {
+    for (int i = 0; i < size; i++) {
+        if (strcmp(ingredients[i].ingredient, ingredient) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// Función para calcular el ingrediente más vendido
+char* ims(int *size, struct Order *orders) {
+    IngredientCount *ingredients = calloc(MAX_INGREDIENTS, sizeof(IngredientCount));
+    if (!ingredients) {
+        fprintf(stderr, "Error al asignar memoria para ingredientes.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int ingredient_count = 0;
+    for (int i = 0; i < *size; i++) {
+        // Procesar los ingredientes de cada orden (se asume que están en el campo pizza_ingredients)
+        char *ingredient = strtok(orders[i].pizza_ingredients, ",");
+        while (ingredient != NULL) {
+            // Eliminar posibles espacios en blanco
+            while (*ingredient == ' ') ingredient++;
+            int idx = find_ingredient(ingredients, ingredient_count, ingredient);
+            if (idx == -1) {
+                // Si no encontramos el ingrediente, lo agregamos
+                strcpy(ingredients[ingredient_count].ingredient, ingredient);
+                ingredients[ingredient_count].count = orders[i].quantity;
+                ingredient_count++;
+            } else {
+                // Si ya existe, sumamos la cantidad de la pizza
+                ingredients[idx].count += orders[i].quantity;
+            }
+            ingredient = strtok(NULL, ",");
+        }
+    }
+
+    // Encontrar el ingrediente más vendido
+    int max_count = 0;
+    int max_index = 0;
+    for (int i = 0; i < ingredient_count; i++) {
+        if (ingredients[i].count > max_count) {
+            max_count = ingredients[i].count;
+            max_index = i;
+        }
+    }
+
+    char *result = malloc(MAX_STRING * sizeof(char));
+    if (!result) {
+        fprintf(stderr, "Error al asignar memoria para el resultado.\n");
+        exit(EXIT_FAILURE);
+    }
+    snprintf(result, MAX_STRING, "Ingrediente más vendido: %s", ingredients[max_index].ingredient);
+
+    free(ingredients);
+    return result;
+}
+
+// Estructura para almacenar las categorías y su cantidad de ventas
+typedef struct {
+    char category[MAX_STRING];
+    int count;
+} CategoryCount;
+
+// Función auxiliar para buscar una categoría en el array de categorías
+int find_category(CategoryCount *categories, int size, char *category) {
+    for (int i = 0; i < size; i++) {
+        if (strcmp(categories[i].category, category) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// Función para calcular la cantidad de pizzas vendidas por categoría
+char* hp(int *size, struct Order *orders) {
+    CategoryCount *categories = calloc(MAX_CATEGORIES, sizeof(CategoryCount));
+    if (!categories) {
+        fprintf(stderr, "Error al asignar memoria para categorías.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int category_count = 0;
+    for (int i = 0; i < *size; i++) {
+        int idx = find_category(categories, category_count, orders[i].pizza_category);
+        if (idx == -1) {
+            // Si no encontramos la categoría, la agregamos
+            strcpy(categories[category_count].category, orders[i].pizza_category);
+            categories[category_count].count = orders[i].quantity;
+            category_count++;
+        } else {
+            // Si ya existe, sumamos la cantidad de pizzas
+            categories[idx].count += orders[i].quantity;
+        }
+    }
+
+    // Crear el resultado con la cantidad de pizzas por categoría
+    char *result = malloc(MAX_STRING * 100 * sizeof(char));  // Asumimos un máximo de 100 categorías
+    if (!result) {
+        fprintf(stderr, "Error al asignar memoria para el resultado.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    snprintf(result, MAX_STRING * 100, "Cantidad de pizzas por categoría:\n");
+    for (int i = 0; i < category_count; i++) {
+        snprintf(result + strlen(result), MAX_STRING, "%s: %d pizzas\n", categories[i].category, categories[i].count);
+    }
+
+    free(categories);
+    return result;
+}
+
 // pms,pls
 // Estructura auxiliar para contar las pizzas vendidas
 typedef struct {
