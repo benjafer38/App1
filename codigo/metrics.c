@@ -4,125 +4,6 @@
 #include <string.h>
 #include <limits.h>
 
-// Estructura para almacenar los ingredientes y su cantidad de ventas
-typedef struct {
-    char ingredient[MAX_STRING];
-    int count;
-} IngredientCount;
-// Función auxiliar para buscar un ingrediente en el array de ingredientes
-int find_ingredient(IngredientCount *ingredients, int size, char *ingredient) {
-    for (int i = 0; i < size; i++) {
-        if (strcmp(ingredients[i].ingredient, ingredient) == 0) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-// Función para calcular el ingrediente más vendido
-char* ims(int *size, struct Order *orders) {
-    IngredientCount *ingredients = calloc(MAX_INGREDIENTS, sizeof(IngredientCount));
-    if (!ingredients) {
-        fprintf(stderr, "Error al asignar memoria para ingredientes.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    int ingredient_count = 0;
-    for (int i = 0; i < *size; i++) {
-        // Procesar los ingredientes de cada orden (se asume que están en el campo pizza_ingredients)
-        char *ingredient = strtok(orders[i].pizza_ingredients, ",");
-        while (ingredient != NULL) {
-            // Eliminar posibles espacios en blanco
-            while (*ingredient == ' ') ingredient++;
-            int idx = find_ingredient(ingredients, ingredient_count, ingredient);
-            if (idx == -1) {
-                // Si no encontramos el ingrediente, lo agregamos
-                strcpy(ingredients[ingredient_count].ingredient, ingredient);
-                ingredients[ingredient_count].count = orders[i].quantity;
-                ingredient_count++;
-            } else {
-                // Si ya existe, sumamos la cantidad de la pizza
-                ingredients[idx].count += orders[i].quantity;
-            }
-            ingredient = strtok(NULL, ",");
-        }
-    }
-
-    // Encontrar el ingrediente más vendido
-    int max_count = 0;
-    int max_index = 0;
-    for (int i = 0; i < ingredient_count; i++) {
-        if (ingredients[i].count > max_count) {
-            max_count = ingredients[i].count;
-            max_index = i;
-        }
-    }
-
-    char *result = malloc(MAX_STRING * sizeof(char));
-    if (!result) {
-        fprintf(stderr, "Error al asignar memoria para el resultado.\n");
-        exit(EXIT_FAILURE);
-    }
-    snprintf(result, MAX_STRING, "Ingrediente más vendido: %s", ingredients[max_index].ingredient);
-
-    free(ingredients);
-    return result;
-}
-
-// Estructura para almacenar las categorías y su cantidad de ventas
-typedef struct {
-    char category[MAX_STRING];
-    int count;
-} CategoryCount;
-
-// Función auxiliar para buscar una categoría en el array de categorías
-int find_category(CategoryCount *categories, int size, char *category) {
-    for (int i = 0; i < size; i++) {
-        if (strcmp(categories[i].category, category) == 0) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-// Función para calcular la cantidad de pizzas vendidas por categoría
-char* hp(int *size, struct Order *orders) {
-    CategoryCount *categories = calloc(MAX_CATEGORIES, sizeof(CategoryCount));
-    if (!categories) {
-        fprintf(stderr, "Error al asignar memoria para categorías.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    int category_count = 0;
-    for (int i = 0; i < *size; i++) {
-        int idx = find_category(categories, category_count, orders[i].pizza_category);
-        if (idx == -1) {
-            // Si no encontramos la categoría, la agregamos
-            strcpy(categories[category_count].category, orders[i].pizza_category);
-            categories[category_count].count = orders[i].quantity;
-            category_count++;
-        } else {
-            // Si ya existe, sumamos la cantidad de pizzas
-            categories[idx].count += orders[i].quantity;
-        }
-    }
-
-    // Crear el resultado con la cantidad de pizzas por categoría
-    char *result = malloc(MAX_STRING * 100 * sizeof(char));  // Asumimos un máximo de 100 categorías
-    if (!result) {
-        fprintf(stderr, "Error al asignar memoria para el resultado.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    snprintf(result, MAX_STRING * 100, "Cantidad de pizzas por categoría:\n");
-    for (int i = 0; i < category_count; i++) {
-        snprintf(result + strlen(result), MAX_STRING, "%s: %d pizzas\n", categories[i].category, categories[i].count);
-    }
-
-    free(categories);
-    return result;
-}
-
 // pms,pls
 // Estructura auxiliar para contar las pizzas vendidas
 typedef struct {
@@ -299,16 +180,20 @@ void calculate_date_metrics(int order_count, Order *orders, char **dms, char **d
 
     // Asignar resultados para cada métrica
     *dms = malloc(MAX_STRING * sizeof(char));  // Reservar memoria para el resultado de la métrica dms
-    snprintf(*dms, MAX_STRING, "Fecha con más ventas (en dinero): %s, Total: %.2f", sales[max_sales_index].order_date, sales[max_sales_index].total_sales);
+    snprintf(*dms, MAX_STRING, "Fecha con más ventas (en dinero): %s, Total: %.2f",
+         sales[max_sales_index].order_date, sales[max_sales_index].total_sales);
 
     *dls = malloc(MAX_STRING * sizeof(char));  // Reservar memoria para el resultado de la métrica dls
-    snprintf(*dls, MAX_STRING, "Fecha con menos ventas (en dinero): %s, Total: %.2f", sales[min_sales_index].order_date, sales[min_sales_index].total_sales);
+    snprintf(*dls, MAX_STRING, "Fecha con menos ventas (en dinero): %s, Total: %.2f",
+         sales[min_sales_index].order_date, sales[min_sales_index].total_sales);
 
     *dmsp = malloc(MAX_STRING * sizeof(char));  // Reservar memoria para el resultado de la métrica dmsp
-    snprintf(*dmsp, MAX_STRING, "Fecha con más ventas (en cantidad de pizzas): %s, Total: %d", sales[max_pizzas_index].order_date, sales[max_pizzas_index].total_pizzas);
+    snprintf(*dmsp, MAX_STRING, "Fecha con más ventas (en cantidad de pizzas): %s, Total: %d",
+         sales[max_pizzas_index].order_date, sales[max_pizzas_index].total_pizzas);
 
     *dlsp = malloc(MAX_STRING * sizeof(char));  // Reservar memoria para el resultado de la métrica dlsp
-    snprintf(*dlsp, MAX_STRING, "Fecha con menos ventas (en cantidad de pizzas): %s, Total: %d", sales[min_pizzas_index].order_date, sales[min_pizzas_index].total_pizzas);
+    snprintf(*dlsp, MAX_STRING, "Fecha con menos ventas (en cantidad de pizzas): %s, Total: %d",
+         sales[min_pizzas_index].order_date, sales[min_pizzas_index].total_pizzas);
 
     free(sales);  // Liberar la memoria asignada para las ventas por fecha
 }
@@ -378,7 +263,120 @@ void calculate_promedio(int order_count, Order *orders, double *apo, double *apd
 
 
 
-// Función para ejecutar métricas solicitadas, ahora incluye las nuevas métricas
+// Estructura para contar los ingredientes
+typedef struct {
+    char ingredient[MAX_STRING];
+    int count;
+} IngredientCount;
+
+// Función para eliminar los espacios al principio y al final de una cadena
+void trim_spaces(char *str) {
+    int start = 0;
+    int end = strlen(str) - 1;
+
+    // Eliminar los espacios al principio
+    while (str[start] == ' ' || str[start] == '\t') {
+        start++;
+    }
+
+    // Eliminar los espacios al final
+    while (end >= start && (str[end] == ' ' || str[end] == '\t')) {
+        end--;
+    }
+
+    // Mover la cadena recortada al inicio
+    for (int i = start; i <= end; i++) {
+        str[i - start] = str[i];
+    }
+    str[end - start + 1] = '\0';  // Terminar la cadena
+}
+
+// Función para calcular el ingrediente más vendido
+void calculate_ims(int order_count, Order *orders, char **ims_result) {
+    IngredientCount ingredients[100];
+    int ing_count = 0;
+    
+    // Recorrer todas las órdenes
+    for (int i = 0; i < order_count; i++) {
+        // Usar coma como delimitador para separar los ingredientes
+        char *token = strtok(orders[i].pizza_ingredients, ",");
+        while (token) {
+            // Eliminar espacios extra al principio y al final de cada ingrediente
+            trim_spaces(token);
+
+            int found = 0;
+            // Buscar si el ingrediente ya está en la lista
+            for (int j = 0; j < ing_count; j++) {
+                if (strcmp(ingredients[j].ingredient, token) == 0) {
+                    ingredients[j].count += orders[i].quantity;
+                    found = 1;
+                    break;
+                }
+            }
+            // Si el ingrediente no se encontró, agregarlo a la lista
+            if (!found) {
+                strcpy(ingredients[ing_count].ingredient, token);
+                ingredients[ing_count].count = orders[i].quantity;
+                ing_count++;
+            }
+
+            // Obtener el siguiente ingrediente
+            token = strtok(NULL, ",");
+        }
+    }
+    
+    // Encontrar el ingrediente más vendido
+    int max_count = 0;
+    char most_sold[MAX_STRING];
+    for (int i = 0; i < ing_count; i++) {
+        if (ingredients[i].count > max_count) {
+            max_count = ingredients[i].count;
+            strcpy(most_sold, ingredients[i].ingredient);
+        }
+    }
+    
+    // Asignar el resultado al puntero de salida
+    *ims_result = malloc(MAX_STRING);
+    snprintf(*ims_result, MAX_STRING, "Ingrediente más vendido: %s", most_sold);
+}
+
+// Función para calcular cantidad de pizzas por categoría
+void calculate_hp(int order_count, Order *orders, char **hp_result) {
+    typedef struct {
+        char category[MAX_STRING];
+        int count;
+    } CategoryCount;
+    
+    CategoryCount categories[20];
+    int cat_count = 0;
+    
+    for (int i = 0; i < order_count; i++) {
+        int found = 0;
+        for (int j = 0; j < cat_count; j++) {
+            if (strcmp(categories[j].category, orders[i].pizza_category) == 0) {
+                categories[j].count += orders[i].quantity;
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
+            strcpy(categories[cat_count].category, orders[i].pizza_category);
+            categories[cat_count].count = orders[i].quantity;
+            cat_count++;
+        }
+    }
+    
+    *hp_result = malloc(MAX_STRING);
+    strcpy(*hp_result, "Categorías de pizzas vendidas:\n");
+    for (int i = 0; i < cat_count; i++) {
+        char buffer[50];
+        snprintf(buffer, sizeof(buffer), "%s: %d\n", categories[i].category, categories[i].count);
+        strcat(*hp_result, buffer);
+    }
+}
+
+
+// Función para ejecutar métricas solicitadas.
 char* execute_metric(const char *metric, int order_count, Order *orders) {
     static char *pms_result = NULL;
     static char *pls_result = NULL;
@@ -388,6 +386,8 @@ char* execute_metric(const char *metric, int order_count, Order *orders) {
     static char *dlsp_result = NULL;
     static double apo_result = -1;
     static double apd_result = -1;
+    static char *ims_result = NULL;
+    static char *hp_result = NULL;
 
 
     // Solo calcular si aún no se ha hecho
@@ -399,6 +399,12 @@ char* execute_metric(const char *metric, int order_count, Order *orders) {
     }
     if (apo_result == -1 || apd_result == -1) {
         calculate_promedio(order_count, orders, &apo_result, &apd_result);
+    }
+    if (!ims_result) {
+        calculate_ims(order_count, orders, &ims_result);
+    }
+    if (!hp_result) {
+        calculate_hp(order_count, orders, &hp_result);
     }
 
 
@@ -424,9 +430,12 @@ char* execute_metric(const char *metric, int order_count, Order *orders) {
         snprintf(result, MAX_STRING, "Promedio de pizzas por orden: %.2f", apo_result);
     } else if (strcmp(metric, "apd") == 0) {
         snprintf(result, MAX_STRING, "Promedio de pizzas por día: %.2f", apd_result);
+    } else if (strcmp(metric, "ims") == 0) {
+        snprintf(result, MAX_STRING, "%s", ims_result);
+    } else if (strcmp(metric, "hp") == 0) {
+        snprintf(result, MAX_STRING, "%s", hp_result);
     } else {
         snprintf(result, MAX_STRING, "Métrica no implementada: %s", metric);
     }
-
     return result;
 }
